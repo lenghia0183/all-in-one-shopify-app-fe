@@ -7,22 +7,23 @@ embedded = true
 
 [build]
 automatically_update_urls_on_dev = true
-include_config_on_deploy = true
 
 [webhooks]
-api_version = "2026-01"
+api_version = "2025-10"
 
   [[webhooks.subscriptions]]
-  topics = [ "app/uninstalled" ]
-  uri = "/webhooks/app/uninstalled"
-
-  [[webhooks.subscriptions]]
-  topics = [ "app/scopes_update" ]
-  uri = "/webhooks/app/scopes_update"
+  topics = [
+  "app/scopes_update",
+  "app/uninstalled",
+  "products/delete",
+  "products/update",
+  "shop/update"
+]
+  uri = "/webhooks"
 
 [access_scopes]
 # Learn more at https://shopify.dev/docs/apps/tools/cli/configuration#access_scopes
-scopes = "write_products"
+scopes = "read_inventory,read_markets,read_metaobject_definitions,read_metaobjects,read_products,read_script_tags,read_themes,unauthenticated_read_metaobjects,unauthenticated_read_product_inventory,unauthenticated_read_product_listings,unauthenticated_read_product_tags,write_metaobject_definitions,write_metaobjects,write_products,write_script_tags,write_themes"
 
 [auth]
 redirect_urls = [ "https://example.com/api/auth" ]
