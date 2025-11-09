@@ -8,7 +8,8 @@ import { apiNoToken } from "@/services/axios";
 import { WebhookTopicEnum } from "@/constants/webhook-topic";
 
 export const action = async ({ request }: ActionFunctionArgs) => {
-  const { topic, shop, session, admin } = await authenticate.webhook(request);
+  const { topic, shop, session, admin, payload } =
+    await authenticate.webhook(request);
 
   if (!admin) {
     // The admin context isn't returned if the webhook fired after a shop was uninstalled.
@@ -79,10 +80,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
              *
              * body: JSON.stringify({ topic, domain: shop, token: session.accessToken, payload }),
              */
-            topic,
             domain: shop,
             token: session.accessToken,
-            payload: {},
+            payload: payload,
           });
         }
         break;
