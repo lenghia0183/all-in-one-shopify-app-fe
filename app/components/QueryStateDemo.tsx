@@ -1,14 +1,15 @@
 import { useQueryState } from "@/hooks/useQueryState";
+import { QueryStateFilterBase } from "@/types/filter-base";
 import { useState, useEffect } from "react";
 
 // Define types for our filters
-interface ProductFilters {
+interface ProductFilters extends QueryStateFilterBase {
   category?: string;
   priceMin?: number;
   priceMax?: number;
 }
 
-interface QuickFilters {
+interface QuickFilters extends QueryStateFilterBase {
   inStock?: boolean;
   onSale?: boolean;
 }
@@ -57,7 +58,7 @@ export default function QueryStateDemo() {
     quickFilters?.inStock || false,
   );
   const [localOnSale, setLocalOnSale] = useState(quickFilters?.onSale || false);
-
+  console.log("filter", filters?.category);
   // Sync local state with query state when it changes
   useEffect(() => {
     setLocalKeyword(keyword);
