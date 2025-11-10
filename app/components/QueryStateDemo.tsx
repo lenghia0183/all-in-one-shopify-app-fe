@@ -1,8 +1,9 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import { useQueryState } from "@/hooks/useQueryState";
 import { QueryStateFilterBase } from "@/types/filter-base";
-import { useState, useEffect } from "react";
 
-// Define types for our filters
 interface ProductFilters extends QueryStateFilterBase {
   category?: string;
   priceMin?: number;
@@ -15,7 +16,6 @@ interface QuickFilters extends QueryStateFilterBase {
 }
 
 export default function QueryStateDemo() {
-  // Initialize the hook with default values
   const {
     page,
     pageSize,
@@ -45,61 +45,60 @@ export default function QueryStateDemo() {
     tab: "products",
   });
 
-  // Local state for form inputs
-  const [localKeyword, setLocalKeyword] = useState(keyword);
-  const [localCategory, setLocalCategory] = useState(filters?.category || "");
-  const [localPriceMin, setLocalPriceMin] = useState(
-    filters?.priceMin?.toString() || "",
-  );
-  const [localPriceMax, setLocalPriceMax] = useState(
-    filters?.priceMax?.toString() || "",
-  );
-  const [localInStock, setLocalInStock] = useState(
-    quickFilters?.inStock || false,
-  );
-  const [localOnSale, setLocalOnSale] = useState(quickFilters?.onSale || false);
-  console.log("filter", filters?.category);
-  // Sync local state with query state when it changes
+  /** ───────────────────────────────────────────────
+   * Local UI state
+   * ─────────────────────────────────────────────── */
+  const [localKeyword, setLocalKeyword] = useState(keyword ?? "");
+  const [localFilters, setLocalFilters] = useState<ProductFilters>({
+    category: filters?.category ?? "",
+    priceMin: filters?.priceMin ?? undefined,
+    priceMax: filters?.priceMax ?? undefined,
+  });
+  const [localQuickFilters, setLocalQuickFilters] = useState<QuickFilters>({
+    inStock: quickFilters?.inStock ?? false,
+    onSale: quickFilters?.onSale ?? false,
+  });
+
+  console.log("localQuickFilter", localQuickFilters);
+  console.log("localFilters", localFilters);
+
+  /** Đồng bộ lại khi query state thay đổi (do back/forward URL) */
   useEffect(() => {
-    setLocalKeyword(keyword);
-    setLocalCategory(filters?.category || "");
-    setLocalPriceMin(filters?.priceMin?.toString() || "");
-    setLocalPriceMax(filters?.priceMax?.toString() || "");
-    setLocalInStock(quickFilters?.inStock || false);
-    setLocalOnSale(quickFilters?.onSale || false);
-  }, [keyword, filters, quickFilters, tab]);
+    setLocalKeyword(keyword ?? "");
+    setLocalFilters({
+      category: filters?.category ?? "",
+      priceMin: filters?.priceMin,
+      priceMax: filters?.priceMax,
+    });
+    setLocalQuickFilters({
+      inStock: quickFilters?.inStock ?? false,
+      onSale: quickFilters?.onSale ?? false,
+    });
+  }, [keyword, filters, quickFilters]);
 
-  // Handle form submission for keyword search
-  const handleKeywordSearch = (e: React.FormEvent) => {
+  /** ───────────────────────────────────────────────
+   * Handlers
+   * ─────────────────────────────────────────────── */
+  const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    setKeyword(localKeyword || "");
+    setKeyword(localKeyword.trim());
   };
 
-  // Handle filter changes
   const handleApplyFilters = () => {
-    const newFilters: ProductFilters = {
-      category: localCategory || undefined,
-      priceMin: localPriceMin ? Number(localPriceMin) : undefined,
-      priceMax: localPriceMax ? Number(localPriceMax) : undefined,
+    const newFilter = {
+      category: localFilters.category || undefined,
+      priceMin: localFilters.priceMin,
+      priceMax: localFilters.priceMax,
     };
 
-    const newQuickFilters: QuickFilters = {
-      inStock: localInStock,
-      onSale: localOnSale,
+    const newQuickFilter = {
+      inStock: localQuickFilters.inStock || undefined,
+      onSale: localQuickFilters.onSale || undefined,
     };
-
-    setFilters(newFilters);
-    setQuickFilters(newQuickFilters);
+    setMultiple({ filters: newFilter, quickFilters: newQuickFilter });
   };
 
-  // Handle tab change
-  const handleTabChange = (newTab: string) => {
-    setTab(newTab);
-  };
-
-  // Handle sorting change
   const handleSortChange = (newOrderBy: string) => {
-    // If same column, toggle direction
     if (newOrderBy === orderBy) {
       setOrder(order === "asc" ? "desc" : "asc");
     } else {
@@ -108,23 +107,12 @@ export default function QueryStateDemo() {
     }
   };
 
-  // Handle pagination
-  const handlePageChange = (newPage: number) => {
-    setPage(newPage);
-  };
-
-  // Handle page size change
-  const handlePageSizeChange = (newPageSize: number) => {
-    setPageSize(newPageSize);
-  };
-
-  // Handle multiple changes at once
   const handleResetAll = () => {
     setMultiple({
       page: 1,
       pageSize: 10,
-      orderBy: "name",
       order: "asc",
+      orderBy: "name",
       filters: {},
       quickFilters: {},
       keyword: "",
@@ -132,67 +120,46 @@ export default function QueryStateDemo() {
     });
   };
 
+  /** ───────────────────────────────────────────────
+   * Render UI
+   * ─────────────────────────────────────────────── */
   return (
-    <div style={{ padding: "20px", fontFamily: "Arial, sans-serif" }}>
-      <h1>Query State Hook Demo</h1>
+    <div style={{ padding: 20, fontFamily: "Arial, sans-serif" }}>
+      <h2>useQueryState Demo</h2>
 
-      {/* Tab Navigation */}
-      <div style={{ marginBottom: "20px" }}>
-        <button
-          onClick={() => handleTabChange("products")}
-          style={{
-            marginRight: "10px",
-            padding: "8px 16px",
-            backgroundColor: tab === "products" ? "#007bff" : "#f8f9fa",
-            color: tab === "products" ? "white" : "black",
-            border: "1px solid #ccc",
-            borderRadius: "4px",
-            cursor: "pointer",
-          }}
-        >
-          Products
-        </button>
-        <button
-          onClick={() => handleTabChange("categories")}
-          style={{
-            marginRight: "10px",
-            padding: "8px 16px",
-            backgroundColor: tab === "categories" ? "#007bff" : "#f8f9fa",
-            color: tab === "categories" ? "white" : "black",
-            border: "1px solid #ccc",
-            borderRadius: "4px",
-            cursor: "pointer",
-          }}
-        >
-          Categories
-        </button>
-        <button
-          onClick={() => handleTabChange("brands")}
-          style={{
-            padding: "8px 16px",
-            backgroundColor: tab === "brands" ? "#007bff" : "#f8f9fa",
-            color: tab === "brands" ? "white" : "black",
-            border: "1px solid #ccc",
-            borderRadius: "4px",
-            cursor: "pointer",
-          }}
-        >
-          Brands
-        </button>
+      {/* Tabs */}
+      <div style={{ marginBottom: 16 }}>
+        {["products", "categories", "brands"].map((t) => (
+          <button
+            key={t}
+            onClick={() => setTab(t)}
+            style={{
+              marginRight: 8,
+              padding: "8px 16px",
+              backgroundColor: tab === t ? "#007bff" : "#f8f9fa",
+              color: tab === t ? "white" : "black",
+              border: "1px solid #ccc",
+              borderRadius: 4,
+              cursor: "pointer",
+            }}
+          >
+            {t.charAt(0).toUpperCase() + t.slice(1)}
+          </button>
+        ))}
       </div>
 
-      {/* Search Form */}
-      <form onSubmit={handleKeywordSearch} style={{ marginBottom: "20px" }}>
+      {/* Search */}
+      <form onSubmit={handleSearch} style={{ marginBottom: 20 }}>
         <input
           type="text"
+          placeholder="Search products..."
           value={localKeyword}
           onChange={(e) => setLocalKeyword(e.target.value)}
-          placeholder="Search products..."
           style={{
-            padding: "8px",
-            marginRight: "10px",
+            padding: 8,
             border: "1px solid #ccc",
-            borderRadius: "4px",
+            borderRadius: 4,
+            marginRight: 10,
           }}
         />
         <button
@@ -202,7 +169,7 @@ export default function QueryStateDemo() {
             backgroundColor: "#28a745",
             color: "white",
             border: "none",
-            borderRadius: "4px",
+            borderRadius: 4,
             cursor: "pointer",
           }}
         >
@@ -213,94 +180,97 @@ export default function QueryStateDemo() {
       {/* Filters */}
       <div
         style={{
-          marginBottom: "20px",
-          padding: "15px",
           border: "1px solid #ccc",
-          borderRadius: "4px",
+          borderRadius: 4,
+          padding: 16,
+          marginBottom: 20,
         }}
       >
-        <h3>Filters</h3>
-        <div style={{ marginBottom: "10px" }}>
-          <label style={{ display: "block", marginBottom: "5px" }}>
-            Category:
-            <input
-              type="text"
-              value={localCategory}
-              onChange={(e) => setLocalCategory(e.target.value)}
-              style={{
-                marginLeft: "10px",
-                padding: "4px",
-                border: "1px solid #ccc",
-                borderRadius: "4px",
-              }}
-            />
-          </label>
-        </div>
-
-        <div style={{ marginBottom: "10px" }}>
-          <label style={{ display: "block", marginBottom: "5px" }}>
-            Price Range:
+        <h4>Filters</h4>
+        <label>
+          Category:
+          <input
+            value={localFilters.category ?? ""}
+            onChange={(e) =>
+              setLocalFilters((f) => ({ ...f, category: e.target.value }))
+            }
+            style={{ marginLeft: 10 }}
+          />
+        </label>
+        <div style={{ marginTop: 10 }}>
+          <label>
+            Price:
             <input
               type="number"
-              value={localPriceMin}
-              onChange={(e) => setLocalPriceMin(e.target.value)}
               placeholder="Min"
-              style={{
-                marginLeft: "10px",
-                padding: "4px",
-                border: "1px solid #ccc",
-                borderRadius: "4px",
-                width: "80px",
-              }}
+              value={localFilters.priceMin ?? ""}
+              onChange={(e) =>
+                setLocalFilters((f) => ({
+                  ...f,
+                  priceMin: e.target.value ? Number(e.target.value) : undefined,
+                }))
+              }
+              style={{ marginLeft: 10, width: 80 }}
             />
             <span style={{ margin: "0 10px" }}>to</span>
             <input
               type="number"
-              value={localPriceMax}
-              onChange={(e) => setLocalPriceMax(e.target.value)}
               placeholder="Max"
-              style={{
-                padding: "4px",
-                border: "1px solid #ccc",
-                borderRadius: "4px",
-                width: "80px",
-              }}
+              value={localFilters.priceMax ?? ""}
+              onChange={(e) =>
+                setLocalFilters((f) => ({
+                  ...f,
+                  priceMax: e.target.value ? Number(e.target.value) : undefined,
+                }))
+              }
+              style={{ width: 80 }}
             />
           </label>
         </div>
 
-        <div style={{ marginBottom: "10px" }}>
-          <label style={{ display: "block", marginBottom: "5px" }}>
+        <div style={{ marginTop: 10 }}>
+          <label>
             <input
               type="checkbox"
-              checked={localInStock}
-              onChange={(e) => setLocalInStock(e.target.checked)}
-              style={{ marginRight: "5px" }}
+              checked={localQuickFilters.inStock === true}
+              onChange={(e) =>
+                setLocalQuickFilters((q) => ({
+                  ...q,
+                  inStock: e.target.checked,
+                }))
+              }
+              style={{ marginRight: 5 }}
             />
-            In Stock Only
+            In stock
           </label>
         </div>
 
-        <div style={{ marginBottom: "10px" }}>
-          <label style={{ display: "block", marginBottom: "5px" }}>
+        <div style={{ marginTop: 10 }}>
+          <label>
             <input
               type="checkbox"
-              checked={localOnSale}
-              onChange={(e) => setLocalOnSale(e.target.checked)}
-              style={{ marginRight: "5px" }}
+              checked={localQuickFilters.onSale === true}
+              onChange={(e) =>
+                setLocalQuickFilters((q) => ({
+                  ...q,
+                  onSale: e.target.checked,
+                }))
+              }
+              style={{ marginRight: 5 }}
             />
-            On Sale
+            On sale
           </label>
         </div>
 
         <button
           onClick={handleApplyFilters}
           style={{
+            marginTop: 10,
             padding: "8px 16px",
             backgroundColor: "#007bff",
             color: "white",
             border: "none",
-            borderRadius: "4px",
+            borderRadius: 4,
             cursor: "pointer",
           }}
         >
@@ -308,132 +278,96 @@ export default function QueryStateDemo() {
         </button>
       </div>
 
-      {/* Sorting Controls */}
-      <div style={{ marginBottom: "20px" }}>
-        <h3>Sort By</h3>
-        <button
-          onClick={() => handleSortChange("name")}
-          style={{
-            marginRight: "10px",
-            padding: "8px 16px",
-            backgroundColor: orderBy === "name" ? "#007bff" : "#f8f9fa",
-            color: orderBy === "name" ? "white" : "black",
-            border: "1px solid #ccc",
-            borderRadius: "4px",
-            cursor: "pointer",
-          }}
-        >
-          Name {orderBy === "name" && (order === "asc" ? "↑" : "↓")}
-        </button>
-        <button
-          onClick={() => handleSortChange("price")}
-          style={{
-            marginRight: "10px",
-            padding: "8px 16px",
-            backgroundColor: orderBy === "price" ? "#007bff" : "#f8f9fa",
-            color: orderBy === "price" ? "white" : "black",
-            border: "1px solid #ccc",
-            borderRadius: "4px",
-            cursor: "pointer",
-          }}
-        >
-          Price {orderBy === "price" && (order === "asc" ? "↑" : "↓")}
-        </button>
-        <button
-          onClick={() => handleSortChange("date")}
-          style={{
-            padding: "8px 16px",
-            backgroundColor: orderBy === "date" ? "#007bff" : "#f8f9fa",
-            color: orderBy === "date" ? "white" : "black",
-            border: "1px solid #ccc",
-            borderRadius: "4px",
-            cursor: "pointer",
-          }}
-        >
-          Date {orderBy === "date" && (order === "asc" ? "↑" : "↓")}
-        </button>
-      </div>
-
-      {/* Pagination Controls */}
-      <div style={{ marginBottom: "20px" }}>
-        <h3>Pagination</h3>
-        <div>
-          <span>Page: </span>
+      {/* Sort */}
+      <div style={{ marginBottom: 20 }}>
+        <h4>Sort By</h4>
+        {["name", "price", "date"].map((field) => (
           <button
-            onClick={() => handlePageChange(page - 1)}
-            disabled={page <= 1}
+            key={field}
+            onClick={() => handleSortChange(field)}
             style={{
-              marginRight: "5px",
-              padding: "4px 8px",
-              backgroundColor: "#f8f9fa",
+              marginRight: 8,
+              padding: "8px 16px",
+              backgroundColor: orderBy === field ? "#007bff" : "#f8f9fa",
+              color: orderBy === field ? "white" : "black",
               border: "1px solid #ccc",
-              borderRadius: "4px",
-              cursor: page <= 1 ? "not-allowed" : "pointer",
-              opacity: page <= 1 ? 0.5 : 1,
-            }}
-          >
-            Previous
-          </button>
-          <span style={{ margin: "0 10px" }}>{page}</span>
-          <button
-            onClick={() => handlePageChange(page + 1)}
-            style={{
-              marginLeft: "5px",
-              padding: "4px 8px",
-              backgroundColor: "#f8f9fa",
-              border: "1px solid #ccc",
-              borderRadius: "4px",
+              borderRadius: 4,
               cursor: "pointer",
             }}
           >
-            Next
+            {field.charAt(0).toUpperCase() + field.slice(1)}{" "}
+            {orderBy === field ? (order === "asc" ? "↑" : "↓") : ""}
           </button>
-        </div>
-        <div style={{ marginTop: "10px" }}>
-          <span>Items per page: </span>
-          <select
-            value={pageSize}
-            onChange={(e) => handlePageSizeChange(Number(e.target.value))}
-            style={{
-              padding: "4px",
-              border: "1px solid #ccc",
-              borderRadius: "4px",
-            }}
-          >
-            <option value={5}>5</option>
-            <option value={10}>10</option>
-            <option value={20}>20</option>
-            <option value={50}>50</option>
-          </select>
+        ))}
+      </div>
+
+      {/* Pagination */}
+      <div style={{ marginBottom: 20 }}>
+        <h4>Pagination</h4>
+        <button
+          disabled={page <= 1}
+          onClick={() => setPage(page - 1)}
+          style={{
+            padding: "6px 12px",
+            marginRight: 8,
+            cursor: page <= 1 ? "not-allowed" : "pointer",
+          }}
+        >
+          Prev
+        </button>
+        <span>
+          Page <strong>{page}</strong>
+        </span>
+        <button
+          onClick={() => setPage(page + 1)}
+          style={{ padding: "6px 12px", marginLeft: 8 }}
+        >
+          Next
+        </button>
+        <div style={{ marginTop: 10 }}>
+          <label>
+            Items per page:
+            <select
+              value={pageSize}
+              onChange={(e) => setPageSize(Number(e.target.value))}
+              style={{ marginLeft: 8 }}
+            >
+              {[5, 10, 20, 50].map((n) => (
+                <option key={n} value={n}>
+                  {n}
+                </option>
+              ))}
+            </select>
+          </label>
         </div>
       </div>
 
-      {/* Reset Button */}
+      {/* Reset */}
       <button
         onClick={handleResetAll}
         style={{
-          marginBottom: "20px",
-          padding: "8px 16px",
           backgroundColor: "#dc3545",
           color: "white",
+          padding: "8px 16px",
           border: "none",
-          borderRadius: "4px",
+          borderRadius: 4,
           cursor: "pointer",
+          marginBottom: 20,
         }}
       >
-        Reset All Filters
+        Reset All
       </button>
 
-      {/* Display Current State */}
+      {/* Current Query State */}
       <div
         style={{
-          padding: "15px",
           border: "1px solid #ccc",
-          borderRadius: "4px",
+          borderRadius: 4,
+          padding: 16,
           backgroundColor: "#f8f9fa",
         }}
       >
-        <h3>Current Query State</h3>
+        <h4>Current Query State</h4>
         <pre>
           {JSON.stringify(
             {

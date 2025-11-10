@@ -1,4 +1,4 @@
-import { useLocation, useNavigate, useSearchParams } from "react-router";
+import { useSearchParams } from "react-router";
 import { useCallback, useMemo } from "react";
 import {
   QueryState,
@@ -15,25 +15,40 @@ export function useQueryState<
   initial: Partial<QueryState<TFilters, TQuickFilters>> = {},
   options: UseQueryStateOptions = {},
 ) {
-  const [searchParams] = useSearchParams();
-  const location = useLocation();
-  const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const stableInitial = useMemo(() => initial, []);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const stableOptions = useMemo(() => options, []);
 
   const state = useMemo(
     () =>
-      parseQueryState<TFilters, TQuickFilters>(searchParams, options, initial),
-    [searchParams, options, initial],
+      parseQueryState<TFilters, TQuickFilters>(
+        searchParams,
+        stableOptions,
+        stableInitial,
+      ),
+    [searchParams, stableOptions, stableInitial],
   );
 
   const updateUrl = useCallback(
     (patch: Partial<QueryState<TFilters, TQuickFilters>>) => {
-      const merged = _.defaultsDeep({}, state, patch);
-      const newParams = buildSearchParams(merged, options);
-      navigate(`${location.pathname}?${newParams.toString()}`, {
-        replace: true,
-      });
+      console.log("patch", patch);
+      const merged = _.mergeWith(
+        {},
+        state,
+        patch,
+        (objValue, srcValue, key) => {
+          if (key === "filters" || key === "quickFilters") return srcValue;
+        },
+      );
+
+      const newParams = buildSearchParams(merged, stableOptions);
+      // console.log(Object.fromEntries(newParams.entries()));
+      setSearchParams(newParams, { replace: true });
     },
-    [navigate, location.pathname, state, options],
+    [setSearchParams, state, stableOptions],
   );
 
   return {
