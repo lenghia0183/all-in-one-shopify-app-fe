@@ -72,7 +72,7 @@ export default function QueryStateDemo() {
   // Handle form submission for keyword search
   const handleKeywordSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    setKeyword(localKeyword);
+    setKeyword(localKeyword || "");
   };
 
   // Handle filter changes
